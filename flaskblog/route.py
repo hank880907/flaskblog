@@ -1,7 +1,7 @@
 import os
 from flask import *
 from flaskblog.models import User, Post
-from flaskblog.forms import RegistrationForm, LoginForm, UpdateForm
+from flaskblog.forms import RegistrationForm, LoginForm, UpdateForm, PostForm
 from flaskblog import app, bcrypt, db
 from flask_login import login_user, current_user, logout_user, login_required
 import secrets
@@ -12,22 +12,6 @@ from PIL import Image
 
 
 
-posts = [
-    {
-        'author':'hank wu',
-        'title':'blog post1',
-        'content':'i am the hamsomest guy on the world',
-        'date_posted':'december 1, 2018'
-    },
-    
-    {
-        'author':'jeff meng',
-        'title':'blog post2',
-        'content':'i am the stupidest guy on the world',
-        'date_posted':'nomember 1, 2018'
-    }    
-]
-
 
 
 
@@ -35,6 +19,7 @@ posts = [
 @app.route("/")
 @app.route("/home")
 def home():
+    posts = Post.query.all()
     return render_template("home.html", posts=posts)
 
 
@@ -152,3 +137,24 @@ def save_picture(form_picture):
     i.save(picture_path) # save the pic to the path.
     return picture_fn
     
+    
+    
+    
+@app.route('/post/new', methods=['GET', 'POST'])
+@login_required
+def new_post():
+    form = PostForm()
+    
+    if form.validate_on_submit():
+        post = Post(title=form.title.data, content=form.content.data, author=current_user)
+        db.session.add(post)
+        db.session.commit()
+        flash('your post has been created', 'success')
+        return redirect(url_for('home'))
+    return render_template('create_post.html', title = 'new post', form=form)
+
+
+@app.route('/post/<int:post_id>', methods=['GET', 'POST'])
+def post(post_id):
+    post = Post.query.get_or_404(post_id)
+    return render_template('post.html', title=post.title, post=post)
