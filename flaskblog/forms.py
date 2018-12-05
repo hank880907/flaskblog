@@ -1,4 +1,5 @@
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed
 from flask_login import current_user
 from wtforms import StringField, PasswordField, SubmitField, BooleanField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
@@ -50,15 +51,16 @@ class UpdateForm(FlaskForm):
     username = StringField("Username", validators=[DataRequired(), Length(min=2, max=15)])    
     email = StringField("Email", validators=[DataRequired(), Email()])
     submit = SubmitField("Update")
+    picture = FileField("Update profile picture", validators=[FileAllowed(['jpg','png'])])
     
     def validate_username(self, username):
-        if (current_user.username!=username):
-            user = User.query.filter_by(username = username).first()
+        if (current_user.username!=username.data):
+            user = User.query.filter_by(username = username.data).first()
             if user:
                 raise ValidationError('The username is taken. please choose another one.')
             
     def validate_email(self, email):
-        if (current_user.email!=email):
-            user = User.query.filter_by(email = email).first()
+        if (current_user.email!=email.data):
+            user = User.query.filter_by(email = email.data).first()
             if user:
                 raise ValidationError('The email is taken. please choose another one.')    
