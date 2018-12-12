@@ -1,0 +1,9 @@
+secrets information need to be saved in environment variable
+in windows: environment variables > add the variable.
+
+linux/ mac: 
+commend:
+nano .bash_profile
+
+export EXAMPLE_PASSWORD = "123456"
+export EXAMPLE_USER = "hank"

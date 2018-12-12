@@ -1,6 +1,30 @@
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flaskblog import db, login_manager
+from flask import current_app
 from datetime import datetime
 from flask_login import UserMixin
+
+
+
+'''
+note: usage of the serializer
+in python shell:
+>>> from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+>>> s = Serializer('secret', 30)
+>>> token = s.dumps({'user_id': 1})   #example dictionary
+>>> s.loads(token)
+{u'user_id': 1}
+
+----------------------------after 30sec-------------
+>>> s.loads(token)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "C:\Python27\lib\site-packages\itsdangerous\jws.py", line 205, in loads
+    date_signed=self.get_issue_date(header),
+itsdangerous.exc.SignatureExpired: Signature expired
+>>>
+'''
+
 
 '''
 keep in mind that:
@@ -21,7 +45,9 @@ class attribute.s
 
 @login_manager.user_loader
 def load_user(user_id):
-    '''for login the user'''
+    '''for login the user
+    implement the flask_login
+    UserMixin is a package that contains the implemented method'''
     return User.query.get(int(user_id))
 
 
@@ -38,6 +64,21 @@ class User(db.Model, UserMixin):
     # i don't clearly know what does the backref works. is "author" a commend ??
     posts = db.relationship('Post', backref='author', lazy=True) # the string 'Post' refer to the class post
     
+    
+    def get_reset_token(self, expires_sec=30):
+        s = Serializer(current_app.config['SECRET_KEY'], expires_sec)
+        return s.dumps({'user_id': self.id})
+    
+    @staticmethod
+    def verify_reset_token(token):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            user_id = s.loads(token)['user_id']
+        except:
+            return None
+        return User.query.get(user_id)
+    
+    @staticmethod
     def __repr__(self):
         return "user:{}, email:{}, image:{}".format(self.username, self.email, self.image_file)
 
